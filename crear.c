@@ -5,9 +5,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-
-int main (char *nombre, int mode){
+int main(int argc, char *argv[]) {
+    if (argc != 3) {
+        fprintf(stderr, "Uso: %s <nombre_archivo> <modo (octal)>\n", argv[0]);
+        return -1;
+    }
+    
+    char *nombre = argv[1];
     int fd;
+    mode_t mode;
+    char *endptr;
+    
+    mode = strtol(argv[2], &endptr, 8);
 
     mode_t old_mask = umask(0);
 
