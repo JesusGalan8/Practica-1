@@ -1,13 +1,14 @@
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <errno.h>
+#include <string.h>
 
 int main(int argc, char *argv[]) {
     if (argc != 3) {
-        fprintf(stderr, "Uso: %s <nombre_archivo> <modo (octal)>\n", argv[0]);
+        perror("error in the number of arguments");
         return -1;
     }
     
@@ -20,7 +21,7 @@ int main(int argc, char *argv[]) {
 
     mode_t old_mask = umask(0);
 
-    if (fd = creat(nombre, mode)<0){
+    if ((fd = creat(nombre, mode))<0){
         perror("error creating a file");
         return (-1);
     }

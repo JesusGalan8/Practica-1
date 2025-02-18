@@ -1,7 +1,18 @@
+#include <stdio.h>
 #include <unistd.h>
+#include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include <string.h>
 
+struct alumno{
+	char nombre[50];
+	int nota;
+	int convocatoria;
+};
+
+int main(void){
+    printf("Combine ejecutándose...\n");
+    return 0;
+}
