@@ -12,7 +12,7 @@ SRC2 = combine.c
 OBJ1 = $(SRC1:.c=.o)
 OBJ2 = $(SRC2:.c=.o)
 
-all: $(PROG1) $(PROG2) 
+all: $(PROG1) $(PROG2)
 
 $(PROG1): $(OBJ1)
 	$(CC) $(CFLAGS) -o $@ $^
