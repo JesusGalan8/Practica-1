@@ -35,6 +35,7 @@ int main(int argc, char *argv[]) {
     umask(old_mask); // Restaura la máscara de permisos original del sistema.
 
     return 0; // Finaliza el programa con éxito.
+    // Hola que tal
 }
 
 
