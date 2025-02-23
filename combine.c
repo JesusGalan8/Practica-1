@@ -6,6 +6,7 @@
 #include <errno.h>      // Para manejo de errores.
 #include <string.h>     // Para manipulación de cadenas y funciones como strcpy.
 
+//hola que tal
 // Definimos la estructura del alumno según el enunciado
 typedef struct alumno {
     char nombre[50];  // Nombre del alumno (máx. 50 caracteres).
