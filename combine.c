@@ -6,19 +6,43 @@
 #include <errno.h>      // Para manejo de errores.
 #include <string.h>     // Para manipulación de cadenas y funciones como strcpy.
 
+#define MAX_ALUMNOS 100 // Número máximo de alumnos permitido.
 
 // Definimos la estructura del alumno según el enunciado
-typedef struct alumno {
+struct alumno {
     char nombre[50];  // Nombre del alumno (máx. 50 caracteres).
     int nota;         // Nota del alumno.
     int convocatoria; // Convocatoria en la que se presentó.
-} Alumno;
+};
+typedef struct alumno tAlumno;
 
-#define MAX_ALUMNOS 100 // Número máximo de alumnos permitido.
+// Función para intercambiar dos elementos en el array
+void swap(tAlumno *a, tAlumno *b) {
+    tAlumno temp = *a;
+    *a = *b;
+    *b = temp;
+}
 
-// Función de comparación para ordenar los alumnos por nota.
-int comparar_por_nota(const void *a, const void *b) {
-    return ((Alumno *)a)->nota - ((Alumno *)b)->nota;
+// QuickSort adaptado
+void quick_sort(tAlumno arr[], int start, int end) {
+    if (start >= end) return;
+
+    tAlumno p = arr[end]; // Pivote
+    int i = start, j = end;
+
+    while (i <= j) {
+        while (arr[i].nota < p.nota) i++; // Ahora ordena de menor a mayor
+        while (arr[j].nota > p.nota) j--;
+
+        if (i <= j) {
+            swap(&arr[i], &arr[j]);
+            i++;
+            j--;
+        }
+    }
+
+    if (j > start) quick_sort(arr, start, j);
+    if (i < end) quick_sort(arr, i, end);
 }
 
 int main(int argc, char *argv[]) {
@@ -27,68 +51,60 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
-    char *archivo1 = argv[1];
-    char *archivo2 = argv[2];
-    char *archivo_salida = argv[3];
+    char archivo1 = argv[1];
+    char archivo2 = argv[2];
+    char archivo_salida = argv[3];
     char *archivo_estadisticas = "estadisticas.csv"; // Nombre fijo para estadísticas
 
-    Alumno alumnos[MAX_ALUMNOS];
+    tAlumno alumnos[MAX_ALUMNOS];
     int num_alumnos = 0;
 
-    // Intentamos abrir el primer archivo en modo lectura binaria
-    int fd1 = open(archivo1, O_RDONLY);
-    if (fd1 < 0) {
-        perror("Error al abrir el primer archivo");
-        return -1;
+    if ((archivo1 = open(argv[1],O_RDONLY))<0) {
+        perror("Error: no se ha podido abrir el primer fichero");
+        return -2;
     }
 
-    // Intentamos abrir el segundo archivo en modo lectura binaria
-    int fd2 = open(archivo2, O_RDONLY);
-    if (fd2 < 0) {
-        perror("Error al abrir el segundo archivo");
-        close(fd1);
-        return -1;
+    if ((archivo2 = open(argv[2],O_RDONLY))<0) {
+        perror("Error: no se ha podido abrir el segundo fichero");
+        close(archivo1);
+        return -3;
     }
 
     // Leer alumnos del primer archivo
-    Alumno temp;
-    while (read(fd1, &temp, sizeof(Alumno)) == sizeof(Alumno)) {
+    tAlumno temp;
+    while (read(archivo1, &temp, sizeof(tAlumno)) == sizeof(tAlumno)) {
         if (num_alumnos >= MAX_ALUMNOS) {
             perror("Error: Se ha excedido el número máximo de alumnos permitido.");
-            close(fd1);
-            close(fd2);
-            return -1;
+            close(archivo1);
+            close(archivo2);
+            return -4;
         }
         alumnos[num_alumnos++] = temp;
     }
-    close(fd1);
+    close(archivo1);
 
     // Leer alumnos del segundo archivo
-    while (read(fd2, &temp, sizeof(Alumno)) == sizeof(Alumno)) {
+    while (read(archivo2, &temp, sizeof(tAlumno)) == sizeof(tAlumno)) {
         if (num_alumnos >= MAX_ALUMNOS) {
             perror("Error: Se ha excedido el número máximo de alumnos permitido.");
-            close(fd2);
-            return -1;
+            close(archivo2);
+            return -4;
         }
         alumnos[num_alumnos++] = temp;
     }
-    close(fd2);
+    close(archivo2);
 
     // Ordenamos los alumnos por nota de menor a mayor
-    qsort(alumnos, num_alumnos, sizeof(Alumno), comparar_por_nota);
+    quick_sort(alumnos, 0,num_alumnos-1);
 
-    // Creamos el archivo de salida en modo binario
-    int fd_out = creat(archivo_salida, 0666);
-    if (fd_out < 0) {
-        perror("Error al crear el archivo de salida");
-        return -1;
+    if ((archivo_salida = open(argv[3],O_WRONLY | O_CREAT | O_TRUNC))<0) {
+        perror("Error: no se ha podido abrir el fichero de retorno");
+        return -5;
     }
 
-    // Escribimos los alumnos ordenados en el archivo de salida
     for (int i = 0; i < num_alumnos; i++) {
-        write(fd_out, &alumnos[i], sizeof(Alumno));
+        write(num_alumnos, &alumnos[i], sizeof(tAlumno));
     }
-    close(fd_out);
 
     // Contadores de estadísticas
     int categoria_M = 0, categoria_S = 0, categoria_N = 0, categoria_A = 0, categoria_F = 0;
@@ -107,21 +123,12 @@ int main(int argc, char *argv[]) {
             categoria_F++;
     }
 
-    // Creamos el archivo de estadísticas en modo texto
-    FILE *estadisticas = fopen(archivo_estadisticas, "w");
-    if (!estadisticas) {
-        perror("Error al crear el archivo de estadísticas");
-        return -1;
+    int fichero_estadisticas;
+    if (fichero_estadisticas = creat(archivo_estadisticas,0666) < 1){
+        perror("Error: no se pudo generar el fichero con las estadístcias");
+        return -6;
     }
-
-    // Escribimos en el archivo de estadísticas
-    fprintf(estadisticas, "M;%d;%.2f%%\n", categoria_M, (categoria_M * 100.0) / num_alumnos);
-    fprintf(estadisticas, "S;%d;%.2f%%\n", categoria_S, (categoria_S * 100.0) / num_alumnos);
-    fprintf(estadisticas, "N;%d;%.2f%%\n", categoria_N, (categoria_N * 100.0) / num_alumnos);
-    fprintf(estadisticas, "A;%d;%.2f%%\n", categoria_A, (categoria_A * 100.0) / num_alumnos);
-    fprintf(estadisticas, "F;%d;%.2f%%\n", categoria_F, (categoria_F * 100.0) / num_alumnos);
-
-    fclose(estadisticas);
-
+    // Creamos el archivo de estadísticas en modo texto
+    
     return 0; // Ejecución exitosa
 }
