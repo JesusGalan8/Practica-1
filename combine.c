@@ -15,6 +15,8 @@ struct alumno {
 };
 typedef struct alumno tAlumno;
 
+void aux_quick_sort(tAlumno lista[], int left, int right); // Declaración anticipada
+
 /* Debido a las limitaciones de C, intercambiar los índices i y j al mismo tiempo (lista[i],lista[j] = lista[j], lista[i]), por lo que me creo una función auxiliar para 
 intercambiar los elementos.*/
 void intercambiar_elementos(tAlumno *a, tAlumno *b) {
@@ -30,9 +32,9 @@ void intercambiar_elementos(tAlumno *a, tAlumno *b) {
 void quick_sort(tAlumno lista[], int n) {
     //Si la lista tiene más de 0 elementos llamamos a la función auxilar _quick_sort
     if (n > 0)
-        _quick_sort(lista, 0, n - 1);
+        aux_quick_sort(lista, 0, n - 1);
 }
-void _quick_sort(tAlumno lista[], int left, int right) {
+void aux_quick_sort(tAlumno lista[], int left, int right) {
     // Buscamos el índice de en medio en la lista
     int m = (left + right) / 2;
     // Selecionamos este como pivote
@@ -64,10 +66,10 @@ void _quick_sort(tAlumno lista[], int left, int right) {
 
     // En caso de existir elementos en la sublista izquiera lo llamo desde j
     if (left < j)
-        _quick_sort(lista, left, j);
+        aux_quick_sort(lista, left, j);
     // En caso de existir elementos en la sublista izquiera lo llamo desde i
     if (i < right)
-        _quick_sort(lista, i, right);
+        aux_quick_sort(lista, i, right);
 }
 int main(int argc, char *argv[]) {
     // Comprobamos que la función recibe 4 parametros
@@ -138,10 +140,11 @@ int main(int argc, char *argv[]) {
     close(fd_archivo2);
 
     // Ordenamos los alumnos por nota de menor a mayor mediante un quick sort
-    quick_sort(alumnos, 0,num_alumnos-1);
+    quick_sort(alumnos, num_alumnos-1);
 
-    // Abrimos el fichero de salida en modo escritura
-    if ((fd_salida = open(archivo_salida, O_WRONLY)) < 0) {
+    // Abrimos el fichero de salida en modo escritura, en caso de que no exista lo crearemos o si existe pero está escrito, entonces
+    // lo truncaremos. Por esta misma razón también escribimos los permismos de dicho archivo
+    if ((fd_salida = open(archivo_salida, O_WRONLY | O_CREAT | O_TRUNC,0666)) < 0) {
         perror("Error: no se ha podido abrir el fichero de salida");
         return -5;
     }
