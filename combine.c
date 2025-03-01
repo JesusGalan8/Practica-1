@@ -51,60 +51,66 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
-    int archivo1 = argv[1];
-    int archivo2 = argv[2];
-    int archivo_salida = argv[3];
+    char *archivo1 = argv[1];
+    char *archivo2 = argv[2];
+    char *archivo_salida = argv[3];
     char *archivo_estadisticas = "estadisticas.csv"; // Nombre fijo para estadísticas
+    int fd_archivo1, fd_archivo2, fd_salida, fichero_estadisticas; 
 
     tAlumno alumnos[MAX_ALUMNOS];
     int num_alumnos = 0;
 
-    if ((archivo1 = open(argv[1],O_RDONLY))<0) {
+    if ((fd_archivo1 = open(archivo1,O_RDONLY))<0) {
         perror("Error: no se ha podido abrir el primer fichero");
         return -2;
     }
 
-    if ((archivo2 = open(argv[2],O_RDONLY))<0) {
+    if ((fd_archivo2 = open(archivo2,O_RDONLY))<0) {
         perror("Error: no se ha podido abrir el segundo fichero");
-        close(archivo1);
+        close(fd_archivo1);
         return -3;
     }
 
     // Leer alumnos del primer archivo
     tAlumno temp;
-    while (read(archivo1, &temp, sizeof(tAlumno)) == sizeof(tAlumno)) {
+    while (read(fd_archivo1, &temp, sizeof(tAlumno)) == sizeof(tAlumno)) {
         if (num_alumnos >= MAX_ALUMNOS) {
             perror("Error: Se ha excedido el número máximo de alumnos permitido.");
-            close(archivo1);
-            close(archivo2);
+            close(fd_archivo1);
+            close(fd_archivo2);
             return -4;
         }
         alumnos[num_alumnos++] = temp;
     }
-    close(archivo1);
+    close(fd_archivo1);
 
     // Leer alumnos del segundo archivo
-    while (read(archivo2, &temp, sizeof(tAlumno)) == sizeof(tAlumno)) {
+    while (read(fd_archivo2, &temp, sizeof(tAlumno)) == sizeof(tAlumno)) {
         if (num_alumnos >= MAX_ALUMNOS) {
             perror("Error: Se ha excedido el número máximo de alumnos permitido.");
-            close(archivo2);
+            close(fd_archivo2);
             return -4;
         }
         alumnos[num_alumnos++] = temp;
     }
-    close(archivo2);
+    close(fd_archivo2);
 
     // Ordenamos los alumnos por nota de menor a mayor
     quick_sort(alumnos, 0,num_alumnos-1);
 
-    if ((archivo_salida = open(argv[3],O_WRONLY | O_CREAT | O_TRUNC))<0) {
-        perror("Error: no se ha podido abrir el fichero de retorno");
+    if ((fd_salida = open(archivo_salida, O_WRONLY | O_CREAT | O_TRUNC, 0666)) < 0) {
+        perror("Error: no se ha podido abrir el fichero de salida");
         return -5;
     }
-
+ 
     for (int i = 0; i < num_alumnos; i++) {
-        write(num_alumnos, &alumnos[i], sizeof(tAlumno));
+        if (write(fd_salida, &alumnos[i], sizeof(tAlumno)) != sizeof(tAlumno)) {
+            perror("Error al escribir en el archivo de salida");
+            close(fd_salida);
+            return -6;
+        }
     }
+    close(fd_salida);
 
     // Contadores de estadísticas
     int categoria_M = 0, categoria_S = 0, categoria_N = 0, categoria_A = 0, categoria_F = 0;
@@ -123,11 +129,11 @@ int main(int argc, char *argv[]) {
             categoria_F++;
     }
 
-    int fichero_estadisticas;
-    if (fichero_estadisticas = creat(archivo_estadisticas,0666) < 1){
-        perror("Error: no se pudo generar el fichero con las estadístcias");
-        return -6;
+    if ((fichero_estadisticas = creat(archivo_estadisticas, 0666)) < 0) {
+        perror("Error: no se pudo generar el fichero con las estadísticas");
+        return -7;
     }
+    
        
     char buffer[100];
     int len;
@@ -135,18 +141,36 @@ int main(int argc, char *argv[]) {
     donde se almacenará el resultado, en este caso, buffer. Seguidamente le pasamos el tamaño del buffer, para que sepa cual es el número máximo de 
     caracteres que puede almacenar. Tras esto, le pasamos el formato de la cadena, que este caos será M seguido de un entero y un número en punto flotante,
     que estos será el número de dicha estadisca y el porcentaje de la clase que obtuvo dicha calificación */
-    len = snprintf(buffer, sizeof(buffer), "M;%d;%.2f%%\n", categoria_M , ( categoria_M * 100.0) / num_alumnos);
-    write(fichero_estadisticas, buffer, len);
-    len = snprintf(buffer, sizeof(buffer), "S;%d;%.2f%%\n", categoria_S, (categoria_S * 100.0) / num_alumnos);
-    write(fichero_estadisticas, buffer, len);
-    len = snprintf(buffer, sizeof(buffer), "N;%d;%.2f%%\n", categoria_N, (categoria_N * 100.0) / num_alumnos);
-    write(fichero_estadisticas, buffer, len);
-    len = snprintf(buffer, sizeof(buffer), "A;%d;%.2f%%\n", categoria_A, (categoria_A * 100.0) / num_alumnos);
-    write(fichero_estadisticas, buffer, len);
-    len = snprintf(buffer, sizeof(buffer), "F;%d;%.2f%%\n", categoria_F, (categoria_F * 100.0) / num_alumnos);
-    write(fichero_estadisticas, buffer, len);
-
-
+    len = snprintf(buffer, sizeof(buffer), "M;%d;%.2f%%\n", categoria_M, (categoria_M * 100.0) / num_alumnos);
+    if (write(fichero_estadisticas, buffer, len) < 0) {
+        perror("Error al escribir estadísticas");
+        return -8;
+    }
     
-    return 0; // Ejecución exitosa
+    len = snprintf(buffer, sizeof(buffer), "S;%d;%.2f%%\n", categoria_S, (categoria_S * 100.0) / num_alumnos);
+    if (write(fichero_estadisticas, buffer, len) < 0) {
+        perror("Error al escribir estadísticas");
+        return -9;
+    }
+    
+    len = snprintf(buffer, sizeof(buffer), "N;%d;%.2f%%\n", categoria_N, (categoria_N * 100.0) / num_alumnos);
+    if (write(fichero_estadisticas, buffer, len) < 0) {
+        perror("Error al escribir estadísticas");
+        return -10;
+    }
+    
+    len = snprintf(buffer, sizeof(buffer), "A;%d;%.2f%%\n", categoria_A, (categoria_A * 100.0) / num_alumnos);
+    if (write(fichero_estadisticas, buffer, len) < 0) {
+        perror("Error al escribir estadísticas");
+        return -11;
+    }
+    
+    len = snprintf(buffer, sizeof(buffer), "F;%d;%.2f%%\n", categoria_F, (categoria_F * 100.0) / num_alumnos);
+    if (write(fichero_estadisticas, buffer, len) < 0) {
+        perror("Error al escribir estadísticas");
+        return -12;
+    }
+       
+    close(fichero_estadisticas);
+    return 0; 
 }

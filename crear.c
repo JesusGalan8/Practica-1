@@ -14,7 +14,7 @@ int main(int argc, char *argv[]) {
         return -1; // Finaliza el programa con un código de error.
     }
 
-    //Aqui vamos a comprobar que la cadena donde nos indican los permisos tengan 4 caracteres, asi como que sea empezado por 0
+    //Aqui va
     if (strlen(argv[2])!=4 || argv[2][0] != '0'){
         perror("Error: los permisos deben ser una cadena de 4 caracteres empezada por 0"); // Muestra un mensaje de error si los argumentos son incorrectos.
         return -2;
