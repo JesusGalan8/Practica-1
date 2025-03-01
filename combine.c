@@ -51,9 +51,9 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
-    char archivo1 = argv[1];
-    char archivo2 = argv[2];
-    char archivo_salida = argv[3];
+    int archivo1 = argv[1];
+    int archivo2 = argv[2];
+    int archivo_salida = argv[3];
     char *archivo_estadisticas = "estadisticas.csv"; // Nombre fijo para estadísticas
 
     tAlumno alumnos[MAX_ALUMNOS];
@@ -128,7 +128,25 @@ int main(int argc, char *argv[]) {
         perror("Error: no se pudo generar el fichero con las estadístcias");
         return -6;
     }
-    // Creamos el archivo de estadísticas en modo texto
+       
+    char buffer[100];
+    int len;
+    /*La función snintf, lo que hace es guardarnos en memoria una cadena del tamaño buffer. En esta función, lo primero que debemos pasar es la cadena
+    donde se almacenará el resultado, en este caso, buffer. Seguidamente le pasamos el tamaño del buffer, para que sepa cual es el número máximo de 
+    caracteres que puede almacenar. Tras esto, le pasamos el formato de la cadena, que este caos será M seguido de un entero y un número en punto flotante,
+    que estos será el número de dicha estadisca y el porcentaje de la clase que obtuvo dicha calificación */
+    len = snprintf(buffer, sizeof(buffer), "M;%d;%.2f%%\n", categoria_M , ( categoria_M * 100.0) / num_alumnos);
+    write(fichero_estadisticas, buffer, len);
+    len = snprintf(buffer, sizeof(buffer), "S;%d;%.2f%%\n", categoria_S, (categoria_S * 100.0) / num_alumnos);
+    write(fichero_estadisticas, buffer, len);
+    len = snprintf(buffer, sizeof(buffer), "N;%d;%.2f%%\n", categoria_N, (categoria_N * 100.0) / num_alumnos);
+    write(fichero_estadisticas, buffer, len);
+    len = snprintf(buffer, sizeof(buffer), "A;%d;%.2f%%\n", categoria_A, (categoria_A * 100.0) / num_alumnos);
+    write(fichero_estadisticas, buffer, len);
+    len = snprintf(buffer, sizeof(buffer), "F;%d;%.2f%%\n", categoria_F, (categoria_F * 100.0) / num_alumnos);
+    write(fichero_estadisticas, buffer, len);
+
+
     
     return 0; // Ejecución exitosa
 }
