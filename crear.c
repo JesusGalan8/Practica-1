@@ -26,7 +26,7 @@ int main(int argc, char *argv[]) {
     char *error; // Puntero que usaremos para detectar errores
 
     /*Aqui le decimos que vamos a coger la cadena agrv y concretamente la posición 2 (donde se almacena el permiso). En la dirección de 
-    de error guardamos el primer caracter que no cumple con el octal. Si es correcto, el primer caractere que no cumplicará será '/0', 
+    de error guardamos el primer caracter que no cumple con el octal. Si es correcto, el primer caracter que no cumplicará será '/0', 
     ya que los datos se pasan en caracteres.*/
     mode = strtol(argv[2], &error, 8);
 
@@ -39,7 +39,7 @@ int main(int argc, char *argv[]) {
     }
 
     // Guarda la máscara de permisos actual y la establece temporalmente en 0 para que los permisos especificados se apliquen correctamente.
-    mode_t old_mask = umask(0);
+    mode_t mascara_vieja = umask(0);
 
     // Crea un archivo con el nombre y permisos especificados por el usuario.
     // 'creat' equivale a open con los flags O_CREAT | O_WRONLY | O_TRUNC.
@@ -49,10 +49,9 @@ int main(int argc, char *argv[]) {
     }
 
     close(fd); // Cierra el archivo recién creado para liberar recursos.
-    umask(old_mask); // Restaura la máscara de permisos original del sistema.
+    umask(mascara_vieja); // Restaura la máscara de permisos original del sistema.
 
     return 0; // Finaliza el programa con éxito.
 }
-
 
 

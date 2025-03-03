@@ -15,62 +15,19 @@ struct alumno {
 };
 typedef struct alumno tAlumno;
 
-void aux_quick_sort(tAlumno lista[], int left, int right); // Declaración anticipada
-
-/* Debido a las limitaciones de C, intercambiar los índices i y j al mismo tiempo (lista[i],lista[j] = lista[j], lista[i]), por lo que me creo una función auxiliar para 
-intercambiar los elementos.*/
-void intercambiar_elementos(tAlumno *a, tAlumno *b) {
-    // Creamos una variable temporal del tipo alumno
-    tAlumno x = *a;
-    //Copiamos el contenido de la dirreción a la que apunta a en la dirección a la que apunta b
-    *a = *b;
-    // Cogemos y copiamos el contenido de la variable x y la ponemos en la variable a la que apunta x
-    *b = x;
+/*Esta función sirve para pasarle al qsort como debe comparar los elementos que hay dentro de tAlumno. Esta función
+recibirá dos parametros de tipo const void, ya que la función no sabe que tipo de datos está ordenando*/
+int comparacion(const void *a, const void *b) {  
+    //Una vez comenzamos la función convertimos estos al tAlumno, para que sean del tipo de la estructura y poder
+    // acceder así a la nota.              
+    const tAlumno *alumnoA = (const tAlumno *)a;
+    const tAlumno *alumnoB = (const tAlumno *)b;
+    /*Finalmente comparamos la nota de cada alumno y las restamos. Si el resultado es negativo, entonces el qsort podrá
+    al Alumno A antes que al B. Si el resultado es 0, entonces significa que ambas notas son iguales y da igual el orden.
+    Finalmente, si el resultado es positivo, se podrá al alumnoB antes del alumno A*/
+    return alumnoA->nota - alumnoB->nota;
 }
 
-
-void quick_sort(tAlumno lista[], int n) {
-    //Si la lista tiene más de 0 elementos llamamos a la función auxilar _quick_sort
-    if (n > 0)
-        aux_quick_sort(lista, 0, n - 1);
-}
-void aux_quick_sort(tAlumno lista[], int left, int right) {
-    // Buscamos el índice de en medio en la lista
-    int m = (left + right) / 2;
-    // Selecionamos este como pivote
-    tAlumno p = lista[m];
-
-    //inicializamos los ínidices i y j para recorrer la lista
-    int i = left;
-    int j = right;
-
-    // El bucle se ejecutará siempre y cuando i y j no se crucen
-    while (i <= j) {
-        // Si el índice i es menor que el pivote avanzo con él
-        while (lista[i].nota < p.nota)
-            i++;
-        // Si el índice j es mayor que el pivote avanzo con él
-        while (lista[j].nota > p.nota)
-            j--;
-
-        // Si los índices i y j no se han cruzado y los dos se han parado, entonces los intercambio
-        if (i <= j) {
-            /* Para que la función me intercambie los elementos reales de la lista, entonces le debo pasar la dirección de estos, ya que sino lo que pasaría es que se 
-            crearía una copia de dichos elementos, haciendo así que no nos intercambiase las posiciones de ambos elementos*/
-            intercambiar_elementos(&lista[i], &lista[j]);
-            // una vez intercambiados los avanzo
-            i++;
-            j--;
-        }
-    }
-
-    // En caso de existir elementos en la sublista izquiera lo llamo desde j
-    if (left < j)
-        aux_quick_sort(lista, left, j);
-    // En caso de existir elementos en la sublista izquiera lo llamo desde i
-    if (i < right)
-        aux_quick_sort(lista, i, right);
-}
 int main(int argc, char *argv[]) {
     // Comprobamos que la función recibe 4 parametros
     if (argc != 4) {
@@ -121,8 +78,7 @@ int main(int argc, char *argv[]) {
         }
         // Por cada paso vamos guardando los elemntos leidos en la estructura creada al principio. Asimismo, aumentamos en 1 el número de alumnos
         // contabilizando así el número de alumnos que hay en una clase
-        num_alumnos++;
-        alumnos[num_alumnos] = x;
+        alumnos[num_alumnos++] = x;
     }
     // Como ya hemos leido todos los datos que hay en el primer fichero de entrada podemos cerarlo ya
     close(fd_archivo1);
@@ -140,7 +96,10 @@ int main(int argc, char *argv[]) {
     close(fd_archivo2);
 
     // Ordenamos los alumnos por nota de menor a mayor mediante un quick sort
-    quick_sort(alumnos, num_alumnos-1);
+    /*Esta función lo que hace ordenar mediante un quicksort una lista de alumnos, con numalumnos elementos
+    y sizeof(tAlumno) como el tamaño de cada elemento. Finalmente le tenemos que pasar una función comparación para
+    que sepa como tiene que comparar para saber cual es mayor o menor */
+    qsort(alumnos, num_alumnos, sizeof(tAlumno), comparacion);
 
     // Abrimos el fichero de salida en modo escritura, en caso de que no exista lo crearemos o si existe pero está escrito, entonces
     // lo truncaremos. Por esta misma razón también escribimos los permismos de dicho archivo
@@ -188,37 +147,37 @@ int main(int argc, char *argv[]) {
     
        
     char buffer[100];
-    int len;
+    int cadena;
     /*La función snintf, lo que hace es guardarnos en memoria una cadena del tamaño buffer. En esta función, lo primero que debemos pasar es la cadena
     donde se almacenará el resultado, en este caso, buffer. Seguidamente le pasamos el tamaño del buffer, para que sepa cual es el número máximo de 
     caracteres que puede almacenar. Tras esto, le pasamos el formato de la cadena, que este caos será M seguido de un entero y un número en punto flotante,
     que estos será el número de dicha estadisca y el porcentaje de la clase que obtuvo dicha calificación */
-    len = snprintf(buffer, sizeof(buffer), "M;%d;%.2f%%\n", categoria_M, (categoria_M * 100.0) / num_alumnos);
-    if (write(fichero_estadisticas, buffer, len) < 0) {
+    cadena = snprintf(buffer, sizeof(buffer), "M;%d;%.2f%%\n", categoria_M, (categoria_M * 100.0) / num_alumnos);
+    if (write(fichero_estadisticas, buffer, cadena) < 0) {
         perror("Error al escribir estadísticas");
         return -8;
     }
     
-    len = snprintf(buffer, sizeof(buffer), "S;%d;%.2f%%\n", categoria_S, (categoria_S * 100.0) / num_alumnos);
-    if (write(fichero_estadisticas, buffer, len) < 0) {
+    cadena = snprintf(buffer, sizeof(buffer), "S;%d;%.2f%%\n", categoria_S, (categoria_S * 100.0) / num_alumnos);
+    if (write(fichero_estadisticas, buffer, cadena) < 0) {
         perror("Error al escribir estadísticas");
         return -9;
     }
     
-    len = snprintf(buffer, sizeof(buffer), "N;%d;%.2f%%\n", categoria_N, (categoria_N * 100.0) / num_alumnos);
-    if (write(fichero_estadisticas, buffer, len) < 0) {
+    cadena = snprintf(buffer, sizeof(buffer), "N;%d;%.2f%%\n", categoria_N, (categoria_N * 100.0) / num_alumnos);
+    if (write(fichero_estadisticas, buffer, cadena) < 0) {
         perror("Error al escribir estadísticas");
         return -10;
     }
     
-    len = snprintf(buffer, sizeof(buffer), "A;%d;%.2f%%\n", categoria_A, (categoria_A * 100.0) / num_alumnos);
-    if (write(fichero_estadisticas, buffer, len) < 0) {
+    cadena = snprintf(buffer, sizeof(buffer), "A;%d;%.2f%%\n", categoria_A, (categoria_A * 100.0) / num_alumnos);
+    if (write(fichero_estadisticas, buffer, cadena) < 0) {
         perror("Error al escribir estadísticas");
         return -11;
     }
     
-    len = snprintf(buffer, sizeof(buffer), "F;%d;%.2f%%\n", categoria_F, (categoria_F * 100.0) / num_alumnos);
-    if (write(fichero_estadisticas, buffer, len) < 0) {
+    cadena = snprintf(buffer, sizeof(buffer), "F;%d;%.2f%%\n", categoria_F, (categoria_F * 100.0) / num_alumnos);
+    if (write(fichero_estadisticas, buffer, cadena) < 0) {
         perror("Error al escribir estadísticas");
         return -12;
     }
